@@ -12,7 +12,7 @@ O projeto usa CSVs publicos espelhados no GitHub para facilitar a reproducao em 
 
 ## Por que esta base
 
-A base da Olist e adequada para BI porque possui varias dimensoes de negocio: pedidos, clientes, produtos, categorias, pagamentos, frete, prazo de entrega e avaliacoes. Isso permite analisar receita, comportamento regional, desempenho logistico e satisfacao do cliente em um mesmo painel.
+A base da Olist e adequada para BI porque possui varias dimensoes de negocio: pedidos, clientes, produtos, categorias, pagamentos, frete, prazo de entrega e avaliacoes. Isso permite analisar receita, comportamento regional, desempenho logistico e satisfacao do cliente, sendo uma base importante para entender e fornecer otimizações  dentro do cenário logístico brasileiro.
 
 ## Como rodar
 
