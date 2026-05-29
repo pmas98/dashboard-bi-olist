@@ -54,6 +54,7 @@ def compute_delivery_metrics(orders: pd.DataFrame) -> pd.DataFrame:
     purchased = result["order_purchase_timestamp"]
 
     result["delivery_delay_days"] = (delivered - estimated).dt.days
+    result["late_delay_days"] = result["delivery_delay_days"].clip(lower=0)
     result["delivery_days"] = (delivered - purchased).dt.days
     result["purchase_month"] = purchased.dt.to_period("M").dt.to_timestamp()
     result["purchase_date"] = purchased.dt.date
@@ -139,7 +140,7 @@ def calculate_metrics(model: pd.DataFrame) -> DashboardMetrics:
         orders=int(order_count),
         average_ticket=float(revenue / order_count) if order_count else 0.0,
         average_freight=float(model["freight_value"].mean()) if not model.empty else 0.0,
-        average_delay_days=float(model["delivery_delay_days"].mean()) if not model.empty else 0.0,
+        average_delay_days=float(model["late_delay_days"].mean()) if not model.empty else 0.0,
         average_review_score=float(model["review_score"].mean()) if not model.empty else 0.0,
     )
 
@@ -151,7 +152,7 @@ def category_opportunity(model: pd.DataFrame, minimum_orders: int = 30) -> pd.Da
             revenue=("revenue", "sum"),
             orders=("order_id", "nunique"),
             average_review=("review_score", "mean"),
-            average_delay=("delivery_delay_days", "mean"),
+            average_delay=("late_delay_days", "mean"),
             late_rate=("is_late", "mean"),
         )
         .query("orders >= @minimum_orders")

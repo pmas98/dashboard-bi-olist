@@ -45,6 +45,7 @@ Tabelas utilizadas:
 Colunas criadas no pre-processamento:
 
 - `delivery_delay_days`: diferenca em dias entre entrega real e entrega estimada.
+- `late_delay_days`: dias de atraso real, considerando `0` quando a entrega ocorreu no prazo ou antes do prazo.
 - `delivery_days`: tempo entre compra e entrega ao cliente.
 - `purchase_month`: mes da compra.
 - `is_late`: indica se o pedido foi entregue depois da data estimada.
@@ -60,7 +61,7 @@ As datas foram convertidas para formato temporal. Valores ausentes em datas de e
 
 ### Transformacao
 
-Foram criadas colunas de atraso, tempo de entrega, mes da compra, indicador de atraso, receita e valor total do pedido. A tabela de pagamentos foi agregada para o nivel do pedido, somando `payment_value` e combinando os tipos de pagamento quando o pedido usou mais de uma forma.
+Foram criadas colunas de diferenca contra o prazo estimado, atraso real, tempo de entrega, mes da compra, indicador de atraso, receita e valor total do pedido. A metrica `late_delay_days` evita atraso negativo: entregas antecipadas entram como zero no KPI de atraso medio. A tabela de pagamentos foi agregada para o nivel do pedido, somando `payment_value` e combinando os tipos de pagamento quando o pedido usou mais de uma forma.
 
 ### Reducao
 

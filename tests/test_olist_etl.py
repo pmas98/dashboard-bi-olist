@@ -4,6 +4,7 @@ from src.olist_etl import (
     aggregate_payments,
     apply_filters,
     build_analytics_model,
+    calculate_metrics,
     compute_delivery_metrics,
 )
 
@@ -22,6 +23,8 @@ def test_compute_delivery_metrics_calculates_delay_days():
 
     assert result.loc[result["order_id"] == "a", "delivery_delay_days"].iloc[0] == 1
     assert result.loc[result["order_id"] == "b", "delivery_delay_days"].iloc[0] == -2
+    assert result.loc[result["order_id"] == "a", "late_delay_days"].iloc[0] == 1
+    assert result.loc[result["order_id"] == "b", "late_delay_days"].iloc[0] == 0
     assert pd.isna(result.loc[result["order_id"] == "c", "delivery_delay_days"].iloc[0])
     assert result.loc[result["order_id"] == "a", "delivery_days"].iloc[0] == 4
 
@@ -71,6 +74,14 @@ def test_apply_filters_combines_period_state_category_status_payment_and_review(
     assert result["order_id"].tolist() == ["a"]
 
 
+def test_calculate_metrics_uses_only_real_delay_for_average_delay():
+    model = build_analytics_model(sample_frames())
+
+    metrics = calculate_metrics(model)
+
+    assert metrics.average_delay_days == 1 / 2
+
+
 def sample_frames():
     return {
         "orders": pd.DataFrame(
@@ -79,7 +90,7 @@ def sample_frames():
                 "customer_id": ["c1", "c2"],
                 "order_status": ["delivered", "delivered"],
                 "order_purchase_timestamp": ["2018-01-10", "2018-02-10"],
-                "order_delivered_customer_date": ["2018-01-15", "2018-02-22"],
+                "order_delivered_customer_date": ["2018-01-15", "2018-02-18"],
                 "order_estimated_delivery_date": ["2018-01-14", "2018-02-20"],
             }
         ),

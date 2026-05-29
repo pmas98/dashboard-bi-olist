@@ -146,7 +146,7 @@ category_rank = (
 
 state_rank = (
     filtered.groupby("customer_state", as_index=False)
-    .agg(revenue=("revenue", "sum"), orders=("order_id", "nunique"), delay=("delivery_delay_days", "mean"))
+    .agg(revenue=("revenue", "sum"), orders=("order_id", "nunique"), delay=("late_delay_days", "mean"))
     .sort_values("revenue", ascending=False)
 )
 
@@ -176,17 +176,17 @@ with right:
 
 left, right = st.columns(2)
 with left:
-    sample = filtered.dropna(subset=["delivery_delay_days", "review_score"])
+    sample = filtered.dropna(subset=["late_delay_days", "review_score"])
     if len(sample) > 5000:
         sample = sample.sample(5000, random_state=42)
     fig = px.scatter(
         sample,
-        x="delivery_delay_days",
+        x="late_delay_days",
         y="review_score",
         color="customer_state",
         hover_data=["category", "order_status", "revenue"],
         title="Relacao entre atraso de entrega e avaliacao",
-        labels={"delivery_delay_days": "Atraso em dias", "review_score": "Avaliacao"},
+        labels={"late_delay_days": "Dias de atraso", "review_score": "Avaliacao"},
     )
     st.plotly_chart(fig, use_container_width=True)
 
@@ -265,6 +265,7 @@ with st.expander("Ver dados filtrados"):
                 "payment_type",
                 "revenue",
                 "freight_value",
+                "late_delay_days",
                 "delivery_delay_days",
                 "review_score",
             ]
