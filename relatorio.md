@@ -5,10 +5,10 @@
 ## Capa
 
 **Instituição:** Universidade de Fortaleza (UNIFOR)  
-**Curso:** preencher com o nome do curso  
-**Disciplina:** Business Intelligence / Análise de Dados  
-**Professor:** preencher com o nome do professor  
-**Equipe:** preencher com os nomes dos integrantes  
+**Curso:** Ciência da Computação  
+**Disciplina:** Ger da implantação de sistemas  
+**Professor:** Alan Carlos  
+**Equipe:** Danilo, Cássio, Pedro Gabriel, Clysman, Bruno  
 **Base analisada:** Brazilian E-Commerce Public Dataset by Olist  
 **Ferramenta usada:** Python, Streamlit, Pandas e Plotly
 
@@ -177,9 +177,10 @@ A base original não vinha pronta para análise. Cada arquivo respondia por uma 
 A equipe aplicou os seguintes tratamentos:
 
 - converteu colunas de data para formato temporal;
-- manteve datas nulas de entrega quando o pedido não tinha entrega registrada;
-- marcou categorias ausentes como `uncategorized`;
-- marcou pagamentos ausentes como `not_informed`;
+- manteve datas nulas de entrega quando o pedido não tinha entrega registrada. A equipe não preencheu essas datas com valores artificiais porque isso criaria prazos falsos e distorceria o cálculo de atraso;
+- marcou categorias ausentes como `uncategorized`. Assim, produtos sem categoria continuaram na análise sem desaparecer dos totais;
+- marcou pagamentos ausentes como `not_informed`. A equipe preservou esses pedidos e deixou claro que o meio de pagamento não estava disponível;
+- manteve avaliações nulas como nulas. A equipe não transformou nota ausente em zero, porque zero não pertence à escala original da base, que vai de 1 a 5;
 - removeu duplicidades nos campos usados para itens;
 - uniu as tabelas por `order_id`, `customer_id` e `product_id`;
 - padronizou a categoria final usada nos gráficos.
@@ -242,6 +243,7 @@ A equipe desenvolveu o painel em Python com Streamlit e Plotly. O usuário filtr
 
 No filtro padrão de pedidos entregues, o painel apresenta:
 
+- **faturamento de R$ 13.281.098,17**;
 - **96.478 pedidos**;
 - **ticket médio de R$ 137,66**;
 - **frete médio de R$ 19,98**;
@@ -311,9 +313,21 @@ O ranking combina receita, atraso e avaliação. Ele ajuda a equipe a sair da de
 
 A anomalia escolhida para investigação foi:
 
-**por que algumas categorias com bom faturamento ainda representam risco para a satisfação do cliente?**
+**por que a categoria `bed_bath_table` no RJ gera receita relevante, mas aparece com atraso e avaliação piores que a média da operação?**
 
 O painel mostra que a operação geral tem avaliação média positiva, cerca de **4,07/5**, e atraso médio real baixo, cerca de **0,69 dia**. Mesmo assim, a média geral esconde casos críticos. Entre os pedidos que atrasam, o atraso médio fica perto de **10,49 dias**. Esse grupo pequeno pode gerar reclamações, notas baixas e perda de recompra.
+
+O recorte por estado mostra o RJ como ponto de atenção. O estado gerou **R$ 1.766.256,97** em receita, com **12.350 pedidos**, avaliação média de **3,85/5** e atraso médio real de **1,54 dia**. SP, por comparação, gerou mais receita, mas apresentou atraso médio de **0,36 dia** e avaliação média de **4,16/5**. A diferença sugere um problema logístico mais concentrado no RJ.
+
+Dentro do RJ, a categoria `bed_bath_table` aparece como oportunidade clara:
+
+- receita de **R$ 145.114,42**;
+- **1.357 pedidos**;
+- avaliação média de **3,69/5**;
+- atraso médio real de **1,86 dia**;
+- taxa de atraso de **14%**.
+
+Esse recorte junta três sinais ruins para o gestor: receita relevante, atraso acima da média e avaliação abaixo da média. A categoria vende o bastante para importar financeiramente, mas entrega uma experiência pior que o padrão geral da operação.
 
 A leitura de negócio é simples: a empresa não deve tratar todos os pedidos da mesma forma. O gestor deve procurar categorias e estados em que três sinais aparecem juntos:
 
@@ -325,22 +339,22 @@ Essas combinações indicam perda de qualidade em áreas que importam financeira
 
 ## 6.2 A Prescrição
 
-A equipe recomenda priorizar ações logísticas e comerciais nos recortes que aparecem no ranking de oportunidade.
+A equipe recomenda priorizar ações logísticas e comerciais no recorte **RJ + `bed_bath_table`**. Esse caso concentra receita relevante, atraso acima da média e nota baixa.
 
 Plano de ação:
 
-- revisar prazos prometidos nas UFs com maior atraso;
-- negociar SLA com transportadoras desses estados;
-- monitorar pedidos de categorias de alto faturamento antes da data prometida;
-- oferecer cupom de recompra ou frete grátis para clientes com atraso relevante;
-- avaliar vendedores associados a atrasos recorrentes;
-- evitar campanhas agressivas em regiões onde a operação não sustenta o prazo.
+- revisar o prazo prometido para pedidos de `bed_bath_table` no RJ;
+- identificar transportadoras e vendedores associados aos atrasos desse recorte;
+- monitorar pedidos da categoria no RJ antes da data prometida;
+- acionar transportadora e vendedor quando o pedido passar de 5 dias de atraso;
+- oferecer cupom de recompra ou frete grátis para clientes afetados por atraso relevante;
+- evitar campanhas agressivas para `bed_bath_table` no RJ enquanto a operação não estabilizar o prazo.
 
 A ação prática sugerida para o gestor é:
 
-**criar uma rotina semanal de acompanhamento para categorias de alto faturamento com atraso acima de 5 dias, acionando transportadora e vendedor antes que a avaliação do cliente seja registrada.**
+**criar uma rotina semanal de acompanhamento para pedidos de `bed_bath_table` no RJ, com alerta para atrasos acima de 5 dias e contato preventivo com transportadora, vendedor e cliente.**
 
-Essa ação reduz dano financeiro e reputacional. O gestor atua primeiro onde a receita é maior e a experiência do cliente corre mais risco.
+Essa ação reduz dano financeiro e reputacional. O gestor atua primeiro onde o painel mostrou perda concreta de qualidade: uma categoria com volume, receita, atraso e avaliação abaixo do esperado.
 
 ---
 
