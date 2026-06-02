@@ -193,7 +193,7 @@ Por isso, o dashboard usa `late_delay_days` para o indicador principal:
 - entrega no prazo recebe zero;
 - entrega antecipada recebe zero.
 
-Com essa regra, o KPI informa atraso real. No filtro padrão de pedidos entregues, o atraso médio fica em torno de **0,69 dia**, e não em valor negativo.
+Com essa regra, o KPI **Atraso geral** usa todos os pedidos filtrados. No filtro padrão de pedidos entregues, ele fica em torno de **0,69 dia**, porque a maior parte das entregas chegou no prazo ou antes. O painel também separa a métrica **Atraso entre atrasados**, calculada apenas sobre pedidos que passaram da data estimada. Nesse grupo, a média fica perto de **10,49 dias**.
 
 ## 3.2 Transformação
 
@@ -247,11 +247,12 @@ No filtro padrão de pedidos entregues, o painel apresenta:
 - **96.478 pedidos**;
 - **ticket médio de R$ 137,66**;
 - **frete médio de R$ 19,98**;
-- **atraso médio real de 0,69 dia**;
+- **atraso médio geral de 0,69 dia**, considerando todos os pedidos entregues e atribuindo zero para entregas no prazo ou antecipadas;
+- **atraso médio entre pedidos atrasados de 10,49 dias**, considerando apenas pedidos que passaram da data estimada;
 - **avaliação média de 4,07/5**;
 - **taxa de atraso aproximada de 6,58%**.
 
-Esses números resumem a operação. A taxa de atraso mostra que a maioria dos pedidos chegou no prazo ou antes dele. Ao mesmo tempo, o painel permite encontrar os grupos em que o atraso pesa mais.
+Esses números resumem a operação. A taxa de atraso mostra que a maioria dos pedidos chegou no prazo ou antes dele. A média de 10,49 dias entre atrasados mostra a gravidade dos casos problemáticos.
 
 ## Demonstração dos filtros combinados
 

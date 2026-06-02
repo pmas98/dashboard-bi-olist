@@ -35,6 +35,7 @@ class DashboardMetrics:
     average_ticket: float
     average_freight: float
     average_delay_days: float
+    average_late_only_delay_days: float
     average_review_score: float
 
 
@@ -135,12 +136,14 @@ def apply_filters(
 def calculate_metrics(model: pd.DataFrame) -> DashboardMetrics:
     order_count = model["order_id"].nunique()
     revenue = float(model["revenue"].sum())
+    late_orders = model[model["late_delay_days"] > 0]
     return DashboardMetrics(
         revenue=revenue,
         orders=int(order_count),
         average_ticket=float(revenue / order_count) if order_count else 0.0,
         average_freight=float(model["freight_value"].mean()) if not model.empty else 0.0,
         average_delay_days=float(model["late_delay_days"].mean()) if not model.empty else 0.0,
+        average_late_only_delay_days=float(late_orders["late_delay_days"].mean()) if not late_orders.empty else 0.0,
         average_review_score=float(model["review_score"].mean()) if not model.empty else 0.0,
     )
 

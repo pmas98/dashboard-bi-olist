@@ -99,13 +99,22 @@ if filtered.empty:
     st.warning("Nenhum registro encontrado com a combinacao atual de filtros.")
     st.stop()
 
-kpi1, kpi2, kpi3, kpi4, kpi5, kpi6 = st.columns(6)
+kpi1, kpi2, kpi3, kpi4, kpi5, kpi6, kpi7 = st.columns(7)
 kpi1.metric("Faturamento", brl(metrics.revenue))
 kpi2.metric("Pedidos", f"{metrics.orders:,}".replace(",", "."))
 kpi3.metric("Ticket medio", brl(metrics.average_ticket))
 kpi4.metric("Frete medio", brl(metrics.average_freight))
-kpi5.metric("Atraso medio", number(metrics.average_delay_days, " dias"))
-kpi6.metric("Avaliacao media", number(metrics.average_review_score, "/5"))
+kpi5.metric(
+    "Atraso geral",
+    number(metrics.average_delay_days, " dias"),
+    help="Media calculada sobre todos os pedidos filtrados; entregas no prazo ou antecipadas entram como zero.",
+)
+kpi6.metric(
+    "Atraso atrasados",
+    number(metrics.average_late_only_delay_days, " dias"),
+    help="Media calculada apenas entre os pedidos que passaram da data estimada de entrega.",
+)
+kpi7.metric("Avaliacao media", number(metrics.average_review_score, "/5"))
 
 st.divider()
 

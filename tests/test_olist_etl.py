@@ -80,6 +80,7 @@ def test_calculate_metrics_uses_only_real_delay_for_average_delay():
     metrics = calculate_metrics(model)
 
     assert metrics.average_delay_days == 1 / 2
+    assert metrics.average_late_only_delay_days == 1
 
 
 def sample_frames():
