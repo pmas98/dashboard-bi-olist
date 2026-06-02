@@ -164,11 +164,18 @@ def category_opportunity(model: pd.DataFrame, minimum_orders: int = 30) -> pd.Da
         return grouped
 
     grouped["segment"] = grouped["customer_state"] + " + " + grouped["category"]
-    grouped["opportunity_score"] = (
-        grouped["revenue"].rank(pct=True)
-        + grouped["orders"].rank(pct=True)
-        + grouped["average_delay"].fillna(0).rank(pct=True)
-        + grouped["late_rate"].fillna(0).rank(pct=True)
-        + (1 - grouped["average_review"].fillna(5) / 5)
-    )
+    grouped["score_revenue_rank"] = grouped["revenue"].rank(pct=True)
+    grouped["score_orders_rank"] = grouped["orders"].rank(pct=True)
+    grouped["score_delay_rank"] = grouped["average_delay"].fillna(0).rank(pct=True)
+    grouped["score_late_rate_rank"] = grouped["late_rate"].fillna(0).rank(pct=True)
+    grouped["score_low_review_penalty"] = 1 - grouped["average_review"].fillna(5) / 5
+    grouped["opportunity_score"] = grouped[
+        [
+            "score_revenue_rank",
+            "score_orders_rank",
+            "score_delay_rank",
+            "score_late_rate_rank",
+            "score_low_review_penalty",
+        ]
+    ].sum(axis=1)
     return grouped.sort_values("opportunity_score", ascending=False)

@@ -34,6 +34,16 @@ def number(value: float, suffix: str = "") -> str:
     return f"{value:,.2f}{suffix}".replace(",", "X").replace(".", ",").replace("X", ".")
 
 
+def comparison_label(value: float, baseline: float, higher: str = "acima", lower: str = "abaixo") -> str:
+    if pd.isna(value) or pd.isna(baseline):
+        return "sem comparacao"
+    if value > baseline:
+        return higher
+    if value < baseline:
+        return lower
+    return "alinhado"
+
+
 model = load_model()
 
 st.title("Painel BI Interativo - Olist Brazilian E-commerce")
@@ -225,29 +235,56 @@ else:
     top = opportunity.iloc[0]
     top_state = str(top["customer_state"])
     top_category = str(top["category"])
+    filtered_average_delay = float(filtered["late_delay_days"].mean())
+    filtered_late_rate = float(filtered["is_late"].mean())
+    filtered_average_review = float(filtered["review_score"].mean())
+    delay_position = comparison_label(float(top["average_delay"]), filtered_average_delay)
+    late_rate_position = comparison_label(float(top["late_rate"]), filtered_late_rate)
+    review_position = comparison_label(float(top["average_review"]), filtered_average_review)
     col_a, col_b = st.columns((1, 1))
     with col_a:
         st.markdown(
             f"""
-            **Oportunidade detectada:** `{top_state} + {top_category}` combina
-            receita relevante, atraso acima da media e avaliacao abaixo do padrao.
+            **Oportunidade detectada pelos filtros atuais:** `{top_state} + {top_category}`.
+
+            Esse recorte aparece no topo porque tem volume financeiro e operacional
+            relevante, atraso medio `{delay_position}` em relacao a media filtrada,
+            taxa de atraso `{late_rate_position}` em relacao a media filtrada e
+            avaliacao `{review_position}` em relacao a media filtrada.
 
             - Pedidos: {int(top['orders'])}
             - Faturamento: {brl(float(top['revenue']))}
             - Avaliacao media: {number(float(top['average_review']), '/5')}
             - Atraso medio real: {number(float(top['average_delay']), ' dias')}
             - Taxa de atraso: {number(float(top['late_rate'] * 100), '%')}
+            - Score de oportunidade: {number(float(top['opportunity_score']))}
             """
         )
     with col_b:
         st.markdown(
             f"""
-            **Acao sugerida:** priorizar pedidos de `{top_category}` em `{top_state}`.
+            **Como o ranking e calculado:** cada linha do ranking e um par `UF + categoria`.
+            O score soma rankings percentuais de faturamento, pedidos, atraso medio,
+            taxa de atraso e uma penalidade para nota baixa.
+
+            **Componentes do score deste recorte:**
+
+            - Rank faturamento: {number(float(top['score_revenue_rank']))}
+            - Rank pedidos: {number(float(top['score_orders_rank']))}
+            - Rank atraso medio: {number(float(top['score_delay_rank']))}
+            - Rank taxa de atraso: {number(float(top['score_late_rate_rank']))}
+            - Penalidade nota baixa: {number(float(top['score_low_review_penalty']))}
+            """
+        )
+
+    st.markdown(
+        f"""
+        **Acao sugerida:** priorizar pedidos de `{top_category}` em `{top_state}`.
             Revisar prazo prometido, transportadoras e vendedores associados aos
             atrasos desse recorte. Criar alerta para pedidos acima de 5 dias de
             atraso e oferecer cupom ou frete gratis para clientes afetados.
-            """
-        )
+        """
+    )
 
     fig = px.bar(
         opportunity.head(10).sort_values("opportunity_score"),

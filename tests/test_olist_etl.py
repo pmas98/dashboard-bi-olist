@@ -129,6 +129,35 @@ def test_category_opportunity_scores_volume_delay_late_rate_and_review():
     assert result.iloc[0]["segment"] == "RJ + bed_bath_table"
 
 
+def test_category_opportunity_exposes_score_components():
+    model = pd.DataFrame(
+        {
+            "customer_state": ["RJ", "RJ", "SP"],
+            "category": ["bed_bath_table", "bed_bath_table", "health_beauty"],
+            "revenue": [100.0, 50.0, 300.0],
+            "order_id": ["rj-1", "rj-2", "sp-1"],
+            "review_score": [3.0, 3.0, 5.0],
+            "late_delay_days": [3.0, 0.0, 0.0],
+            "is_late": [True, False, False],
+        }
+    )
+
+    result = category_opportunity(model, minimum_orders=1)
+
+    expected_components = [
+        "score_revenue_rank",
+        "score_orders_rank",
+        "score_delay_rank",
+        "score_late_rate_rank",
+        "score_low_review_penalty",
+    ]
+    assert set(expected_components).issubset(result.columns)
+
+    row = result.iloc[0]
+    component_sum = sum(float(row[column]) for column in expected_components)
+    assert row["opportunity_score"] == component_sum
+
+
 def sample_frames():
     return {
         "orders": pd.DataFrame(
