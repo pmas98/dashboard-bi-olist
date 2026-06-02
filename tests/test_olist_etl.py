@@ -52,12 +52,13 @@ def test_build_analytics_model_merges_tables_and_creates_business_columns():
 
     result = build_analytics_model(frames)
 
-    assert set(["revenue", "total_order_value", "customer_state", "category"]).issubset(result.columns)
+    assert set(["revenue", "total_order_value", "customer_state", "seller_state", "category"]).issubset(result.columns)
     first = result[result["order_id"] == "a"].iloc[0]
     assert first["revenue"] == 120.0
     assert first["total_order_value"] == 130.0
     assert first["category"] == "health_beauty"
     assert first["customer_state"] == "SP"
+    assert first["seller_state"] == "SP"
 
 
 def test_apply_filters_combines_period_state_category_status_payment_and_review():
@@ -70,10 +71,23 @@ def test_apply_filters_combines_period_state_category_status_payment_and_review(
         categories=["health_beauty"],
         statuses=["delivered"],
         payment_types=["credit_card + voucher"],
+        seller_states=["SP"],
         review_range=(4, 5),
     )
 
     assert result["order_id"].tolist() == ["a"]
+
+
+def test_apply_filters_combines_seller_state_with_other_filters():
+    model = build_analytics_model(sample_frames())
+
+    result = apply_filters(
+        model,
+        states=["RJ"],
+        seller_states=["MG"],
+    )
+
+    assert result["order_id"].tolist() == ["b"]
 
 
 def test_calculate_metrics_uses_only_real_delay_for_average_delay():
@@ -212,6 +226,14 @@ def sample_frames():
                 "seller_id": ["s1", "s2"],
                 "price": [120.0, 80.0],
                 "freight_value": [10.0, 20.0],
+            }
+        ),
+        "sellers": pd.DataFrame(
+            {
+                "seller_id": ["s1", "s2"],
+                "seller_zip_code_prefix": [1000, 2000],
+                "seller_city": ["sao paulo", "belo horizonte"],
+                "seller_state": ["SP", "MG"],
             }
         ),
         "products": pd.DataFrame(

@@ -12,6 +12,7 @@ DATASET_URLS = {
     "orders": f"{BASE_URL}/olist_orders_dataset.csv",
     "customers": f"{BASE_URL}/olist_customers_dataset.csv",
     "items": f"{BASE_URL}/olist_order_items_dataset.csv",
+    "sellers": f"{BASE_URL}/olist_sellers_dataset.csv",
     "products": f"{BASE_URL}/olist_products_dataset.csv",
     "payments": f"{BASE_URL}/olist_order_payments_dataset.csv",
     "reviews": f"{BASE_URL}/olist_order_reviews_dataset.csv",
@@ -81,9 +82,11 @@ def build_analytics_model(frames: Mapping[str, pd.DataFrame]) -> pd.DataFrame:
 
     item_columns = ["order_id", "order_item_id", "product_id", "seller_id", "price", "freight_value"]
     items = frames["items"][item_columns].drop_duplicates()
+    sellers = frames["sellers"][["seller_id", "seller_state"]].drop_duplicates()
 
     model = (
         items.merge(orders, on="order_id", how="left")
+        .merge(sellers, on="seller_id", how="left")
         .merge(frames["customers"], on="customer_id", how="left")
         .merge(frames["products"], on="product_id", how="left")
         .merge(frames["category_translation"], on="product_category_name", how="left")
@@ -98,6 +101,7 @@ def build_analytics_model(frames: Mapping[str, pd.DataFrame]) -> pd.DataFrame:
         model["price"].fillna(0) + model["freight_value"].fillna(0)
     )
     model["customer_state"] = model["customer_state"].fillna("N/I")
+    model["seller_state"] = model["seller_state"].fillna("N/I")
     model["payment_type"] = model["payment_type"].fillna("not_informed")
     model["review_score"] = pd.to_numeric(model["review_score"], errors="coerce")
     return model
@@ -110,6 +114,7 @@ def apply_filters(
     categories: list[str] | None = None,
     statuses: list[str] | None = None,
     payment_types: list[str] | None = None,
+    seller_states: list[str] | None = None,
     review_range: tuple[int, int] | None = None,
 ) -> pd.DataFrame:
     filtered = model.copy()
@@ -126,6 +131,8 @@ def apply_filters(
         filtered = filtered[filtered["order_status"].isin(statuses)]
     if payment_types:
         filtered = filtered[filtered["payment_type"].isin(payment_types)]
+    if seller_states:
+        filtered = filtered[filtered["seller_state"].isin(seller_states)]
     if review_range is not None:
         minimum, maximum = review_range
         filtered = filtered[filtered["review_score"].between(minimum, maximum, inclusive="both")]

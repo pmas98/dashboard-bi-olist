@@ -22,7 +22,7 @@ st.set_page_config(
 
 
 @st.cache_data(show_spinner="Baixando e preparando a base publica da Olist...")
-def load_model() -> pd.DataFrame:
+def load_model(cache_version: str = "seller-state-v1") -> pd.DataFrame:
     frames = load_source_frames()
     return build_analytics_model(frames)
 
@@ -77,6 +77,11 @@ with st.sidebar:
         sorted(model["customer_state"].dropna().unique()),
         default=[],
     )
+    seller_states = st.multiselect(
+        "UF de origem do produto (vendedor)",
+        sorted(model["seller_state"].dropna().unique()),
+        default=[],
+    )
     categories = st.multiselect(
         "Categoria",
         sorted(model["category"].dropna().unique()),
@@ -101,6 +106,7 @@ filtered = apply_filters(
     categories=categories,
     statuses=statuses,
     payment_types=payment_types,
+    seller_states=seller_states,
     review_range=review_range,
 )
 
@@ -327,6 +333,7 @@ with st.expander("Ver dados filtrados"):
                 "order_id",
                 "order_purchase_timestamp",
                 "customer_state",
+                "seller_state",
                 "category",
                 "order_status",
                 "payment_type",
