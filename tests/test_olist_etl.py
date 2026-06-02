@@ -5,6 +5,7 @@ from src.olist_etl import (
     apply_filters,
     build_analytics_model,
     calculate_metrics,
+    category_opportunity,
     compute_delivery_metrics,
 )
 
@@ -81,6 +82,51 @@ def test_calculate_metrics_uses_only_real_delay_for_average_delay():
 
     assert metrics.average_delay_days == 1 / 2
     assert metrics.average_late_only_delay_days == 1
+
+
+def test_category_opportunity_keeps_state_category_segments_separate():
+    model = pd.DataFrame(
+        {
+            "customer_state": ["RJ", "RJ", "SP"],
+            "category": ["bed_bath_table", "bed_bath_table", "bed_bath_table"],
+            "revenue": [100.0, 50.0, 200.0],
+            "order_id": ["rj-1", "rj-2", "sp-1"],
+            "review_score": [3, 4, 5],
+            "late_delay_days": [2, 0, 0],
+            "is_late": [True, False, False],
+        }
+    )
+
+    result = category_opportunity(model, minimum_orders=1)
+
+    bed_segments = result[result["category"] == "bed_bath_table"]
+    assert sorted(bed_segments["customer_state"].tolist()) == ["RJ", "SP"]
+    assert bed_segments.loc[bed_segments["customer_state"] == "RJ", "orders"].iloc[0] == 2
+
+
+def test_category_opportunity_scores_volume_delay_late_rate_and_review():
+    model = pd.DataFrame(
+        {
+            "customer_state": ["RJ", "RJ", "RJ", "RJ", "RJ", "RJ"],
+            "category": [
+                "bed_bath_table",
+                "bed_bath_table",
+                "bed_bath_table",
+                "bed_bath_table",
+                "watches_gifts",
+                "watches_gifts",
+            ],
+            "revenue": [20.0, 20.0, 20.0, 20.0, 120.0, 80.0],
+            "order_id": ["bed-1", "bed-2", "bed-3", "bed-4", "watch-1", "watch-2"],
+            "review_score": [3.5, 3.5, 3.5, 3.5, 3.5, 3.5],
+            "late_delay_days": [6.0, 6.0, 0.0, 0.0, 1.0, 0.0],
+            "is_late": [True, True, False, False, True, False],
+        }
+    )
+
+    result = category_opportunity(model, minimum_orders=1)
+
+    assert result.iloc[0]["segment"] == "RJ + bed_bath_table"
 
 
 def sample_frames():

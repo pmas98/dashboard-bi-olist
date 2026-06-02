@@ -223,40 +223,42 @@ if opportunity.empty:
     st.info("A combinacao de filtros atual nao tem volume suficiente para ranking diagnostico.")
 else:
     top = opportunity.iloc[0]
+    top_state = str(top["customer_state"])
+    top_category = str(top["category"])
     col_a, col_b = st.columns((1, 1))
     with col_a:
         st.markdown(
             f"""
-            **Oportunidade detectada:** `{top['category']}` combina alto faturamento
-            com risco de experiencia ruim.
+            **Oportunidade detectada:** `{top_state} + {top_category}` combina
+            receita relevante, atraso acima da media e avaliacao abaixo do padrao.
 
             - Pedidos: {int(top['orders'])}
             - Faturamento: {brl(float(top['revenue']))}
             - Avaliacao media: {number(float(top['average_review']), '/5')}
+            - Atraso medio real: {number(float(top['average_delay']), ' dias')}
             - Taxa de atraso: {number(float(top['late_rate'] * 100), '%')}
             """
         )
     with col_b:
         st.markdown(
-            """
-            **Acao sugerida:** priorizar a categoria/UF filtrada com revisao de SLA,
-            acompanhamento de transportadoras e campanha seletiva de recuperacao
-            quando houver atraso. A decisao deve mirar categorias com receita alta,
-            atraso elevado e nota baixa, pois elas concentram impacto financeiro e
-            reputacional.
+            f"""
+            **Acao sugerida:** priorizar pedidos de `{top_category}` em `{top_state}`.
+            Revisar prazo prometido, transportadoras e vendedores associados aos
+            atrasos desse recorte. Criar alerta para pedidos acima de 5 dias de
+            atraso e oferecer cupom ou frete gratis para clientes afetados.
             """
         )
 
     fig = px.bar(
         opportunity.head(10).sort_values("opportunity_score"),
         x="opportunity_score",
-        y="category",
+        y="segment",
         orientation="h",
         color="average_review",
-        title="Ranking de oportunidade por categoria",
+        title="Ranking de oportunidade por UF + categoria",
         labels={
             "opportunity_score": "Score de oportunidade",
-            "category": "Categoria",
+            "segment": "UF + categoria",
             "average_review": "Nota media",
         },
     )

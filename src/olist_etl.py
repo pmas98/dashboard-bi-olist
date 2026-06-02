@@ -41,7 +41,7 @@ class DashboardMetrics:
 
 def load_source_frames(urls: Mapping[str, str] | None = None) -> dict[str, pd.DataFrame]:
     source_urls = urls or DATASET_URLS
-    return {name: pd.read_csv(url) for name, url in source_urls.items()}
+    return {name: pd.read_csv(url, low_memory=False) for name, url in source_urls.items()}
 
 
 def compute_delivery_metrics(orders: pd.DataFrame) -> pd.DataFrame:
@@ -150,7 +150,7 @@ def calculate_metrics(model: pd.DataFrame) -> DashboardMetrics:
 
 def category_opportunity(model: pd.DataFrame, minimum_orders: int = 30) -> pd.DataFrame:
     grouped = (
-        model.groupby("category", as_index=False)
+        model.groupby(["customer_state", "category"], as_index=False)
         .agg(
             revenue=("revenue", "sum"),
             orders=("order_id", "nunique"),
@@ -163,8 +163,11 @@ def category_opportunity(model: pd.DataFrame, minimum_orders: int = 30) -> pd.Da
     if grouped.empty:
         return grouped
 
+    grouped["segment"] = grouped["customer_state"] + " + " + grouped["category"]
     grouped["opportunity_score"] = (
         grouped["revenue"].rank(pct=True)
+        + grouped["orders"].rank(pct=True)
+        + grouped["average_delay"].fillna(0).rank(pct=True)
         + grouped["late_rate"].fillna(0).rank(pct=True)
         + (1 - grouped["average_review"].fillna(5) / 5)
     )
