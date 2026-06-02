@@ -133,6 +133,37 @@ def apply_filters(
     return filtered
 
 
+def build_delivery_review_distribution(model: pd.DataFrame) -> pd.DataFrame:
+    required_columns = ["order_id", "delivery_delay_days", "review_score"]
+    base = model.dropna(subset=required_columns).drop_duplicates("order_id").copy()
+    result_columns = ["delivery_band", "review_score", "orders", "average_delivery_gap"]
+    if base.empty:
+        return pd.DataFrame(columns=result_columns)
+
+    labels = [
+        "15+ dias antes",
+        "6 a 14 dias antes",
+        "No prazo",
+        "1 a 2 dias depois",
+        "3 a 5 dias depois",
+        "6+ dias depois",
+    ]
+    base["delivery_band"] = pd.cut(
+        base["delivery_delay_days"],
+        bins=[float("-inf"), -15, -6, 0, 2, 5, float("inf")],
+        labels=labels,
+    )
+
+    return (
+        base.groupby(["delivery_band", "review_score"], observed=True, as_index=False)
+        .agg(
+            orders=("order_id", "nunique"),
+            average_delivery_gap=("delivery_delay_days", "mean"),
+        )
+        .sort_values(["delivery_band", "review_score"])
+    )
+
+
 def calculate_metrics(model: pd.DataFrame) -> DashboardMetrics:
     order_count = model["order_id"].nunique()
     revenue = float(model["revenue"].sum())

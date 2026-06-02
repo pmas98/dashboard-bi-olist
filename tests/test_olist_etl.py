@@ -4,6 +4,7 @@ from src.olist_etl import (
     aggregate_payments,
     apply_filters,
     build_analytics_model,
+    build_delivery_review_distribution,
     calculate_metrics,
     category_opportunity,
     compute_delivery_metrics,
@@ -156,6 +157,31 @@ def test_category_opportunity_exposes_score_components():
     row = result.iloc[0]
     component_sum = sum(float(row[column]) for column in expected_components)
     assert row["opportunity_score"] == component_sum
+
+
+def test_build_delivery_review_distribution_groups_orders_by_delivery_band():
+    model = pd.DataFrame(
+        {
+            "order_id": ["early-1", "early-1", "ontime-1", "late-1", "late-2"],
+            "delivery_delay_days": [-20.0, -20.0, 0.0, 3.0, 8.0],
+            "review_score": [5, 5, 4, 2, 1],
+        }
+    )
+
+    result = build_delivery_review_distribution(model)
+
+    early = result[
+        (result["delivery_band"] == "15+ dias antes")
+        & (result["review_score"] == 5)
+    ].iloc[0]
+    assert early["orders"] == 1
+
+    assert set(result["delivery_band"].astype(str)) == {
+        "15+ dias antes",
+        "No prazo",
+        "3 a 5 dias depois",
+        "6+ dias depois",
+    }
 
 
 def sample_frames():

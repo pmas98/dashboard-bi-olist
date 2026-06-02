@@ -7,6 +7,7 @@ import streamlit as st
 from src.olist_etl import (
     apply_filters,
     build_analytics_model,
+    build_delivery_review_distribution,
     calculate_metrics,
     category_opportunity,
     load_source_frames,
@@ -195,19 +196,37 @@ with right:
 
 left, right = st.columns(2)
 with left:
-    sample = filtered.dropna(subset=["late_delay_days", "review_score"])
-    if len(sample) > 5000:
-        sample = sample.sample(5000, random_state=42)
-    fig = px.scatter(
-        sample,
-        x="late_delay_days",
-        y="review_score",
-        color="customer_state",
-        hover_data=["category", "order_status", "revenue"],
-        title="Relacao entre atraso de entrega e avaliacao",
-        labels={"late_delay_days": "Dias de atraso", "review_score": "Avaliacao"},
-    )
-    st.plotly_chart(fig, use_container_width=True)
+    delivery_review = build_delivery_review_distribution(filtered)
+    if delivery_review.empty:
+        st.info("Nao ha entregas com avaliacao suficientes para este grafico.")
+    else:
+        fig = px.scatter(
+            delivery_review,
+            x="delivery_band",
+            y="review_score",
+            size="orders",
+            color="orders",
+            hover_data={"orders": True, "average_delivery_gap": ":.2f"},
+            title="Avaliacao por faixa de entrega",
+            labels={
+                "delivery_band": "Faixa de entrega",
+                "review_score": "Avaliacao",
+                "orders": "Pedidos",
+                "average_delivery_gap": "Media vs prazo",
+            },
+            category_orders={
+                "delivery_band": [
+                    "15+ dias antes",
+                    "6 a 14 dias antes",
+                    "No prazo",
+                    "1 a 2 dias depois",
+                    "3 a 5 dias depois",
+                    "6+ dias depois",
+                ]
+            },
+        )
+        fig.update_yaxes(dtick=1, range=[0.5, 5.5])
+        st.plotly_chart(fig, use_container_width=True)
 
 with right:
     payment = (
